@@ -1,0 +1,34 @@
+name: exchange
+
+on:
+  workflow_dispatch:
+    inputs:
+      expect:
+        type: choice
+        options: ["200", "403"]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  HEX_API_URL: https://staging.hex.pm/api
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  exchange:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: T13 exchange from ${{ github.repository }} (id ${{ github.repository_id }}), expecting ${{ inputs.expect }}
+        run: |
+          . scripts/wi.sh
+          oidc o; exchange package:hexpm/wi_e2e_public o t
+          if [ "${{ inputs.expect }}" = 200 ]; then
+            expect 200
+          else
+            expect 403 access_denied "No matching workload identity"
+          fi
